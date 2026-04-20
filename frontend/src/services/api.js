@@ -33,6 +33,7 @@ export const addSubscription         = (data) => API.post('/subscriptions', data
 export const updateSubscription      = (id, data) => API.put(`/subscriptions/${id}`, data);
 export const updateSubscriptionStatus= (id, status) => API.patch(`/subscriptions/${id}/status`, { status });
 export const deleteSubscription      = (id) => API.delete(`/subscriptions/${id}`);
+export const shareSubscription       = (id, data) => API.post(`/subscriptions/${id}/share`, data);
 
 // ── Dashboard Analytics ──
 export const getDashboard = () => API.get('/dashboard');

@@ -3,10 +3,10 @@ import { getDashboard } from '../services/api';
 import { CreditCard, Calendar, Activity, PauseCircle, TrendingDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import { Doughnut, Line } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -14,7 +14,8 @@ export default function Dashboard() {
     stats: { active_subs: 0, paused_subs: 0, cancelled_subs: 0, estimated_monthly_spend: 0, estimated_annual_spend: 0 },
     categoryBreakdown: [],
     upcomingRenewals: [],
-    dueThisWeek: []
+    dueThisWeek: [],
+    trendData: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +32,7 @@ export default function Dashboard() {
     return <div className="animate-pulse flex space-x-4"><div className="flex-1 space-y-6 py-1"><div className="h-6 bg-surface-2 rounded w-1/4"></div><div className="space-y-3"><div className="grid grid-cols-3 gap-4"><div className="h-32 bg-surface-2 rounded col-span-1"></div><div className="h-32 bg-surface-2 rounded col-span-1"></div><div className="h-32 bg-surface-2 rounded col-span-1"></div></div></div></div></div>;
   }
 
-  const { stats, categoryBreakdown, upcomingRenewals, dueThisWeek } = data;
+  const { stats, categoryBreakdown, upcomingRenewals, dueThisWeek, trendData } = data;
 
   // Alerts logic: identify renewals due in <= 3 days heavily emphasizing 1 day
   const today = new Date();
@@ -50,6 +51,20 @@ export default function Dashboard() {
         backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#a855f7', '#ec4899', '#eab308'],
         borderWidth: 0,
         hoverOffset: 4
+      }
+    ]
+  };
+
+  const lineChartData = {
+    labels: trendData?.length > 0 ? trendData.map(t => t.month_label) : ['No Data'],
+    datasets: [
+      {
+        label: 'Monthly Paid',
+        data: trendData?.length > 0 ? trendData.map(t => t.total_spent) : [0],
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        tension: 0.4,
+        fill: true,
       }
     ]
   };
@@ -122,11 +137,21 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Visual Analytics */}
-        <div className="space-y-4 lg:col-span-1">
-          <h3 className="section-label">Spending by Category</h3>
-          <div className="card p-6 flex flex-col items-center justify-center h-full min-h-[300px]">
+        <div className="space-y-4 lg:col-span-2 flex flex-col sm:flex-row gap-4 h-full">
+          <div className="card p-6 flex flex-col items-center justify-center flex-1 min-h-[300px]">
+            <h3 className="section-label w-full text-center mb-4">6-Month Trend</h3>
+            {trendData && trendData.length > 0 ? (
+              <div className="w-full relative min-h-[220px]">
+                <Line data={lineChartData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#334155' } }, x: { grid: { display: false } } } }} />
+              </div>
+            ) : (
+              <div className="text-text-muted text-sm my-auto">No payment history yet.</div>
+            )}
+          </div>
+          <div className="card p-6 flex flex-col items-center justify-center flex-1 min-h-[300px]">
+            <h3 className="section-label w-full text-center mb-4">Spending by Category</h3>
             {categoryBreakdown.length > 0 ? (
-              <div className="w-full max-w-[200px]">
+              <div className="w-full max-w-[200px] mx-auto">
                 <Doughnut data={chartData} options={{ plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } }, cutout: '75%' }} />
               </div>
             ) : (

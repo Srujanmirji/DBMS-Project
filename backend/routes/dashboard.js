@@ -53,6 +53,17 @@ router.get('/', auth, async (req, res) => {
       ORDER BY total_amount_paid DESC
     `, [userId]);
 
+    // 5. Monthly Spending Trend
+    const [trendData] = await db.query(`
+      SELECT 
+        DATE_FORMAT(payment_date, '%b %Y') as month_label,
+        SUM(amount) as total_spent
+      FROM payments
+      WHERE user_id = ? AND payment_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+      GROUP BY DATE_FORMAT(payment_date, '%b %Y'), YEAR(payment_date), MONTH(payment_date)
+      ORDER BY YEAR(payment_date) ASC, MONTH(payment_date) ASC
+    `, [userId]);
+
     const stats = spendStats[0];
     stats.estimated_annual_spend = (stats.estimated_monthly_spend || 0) * 12;
 
@@ -61,7 +72,8 @@ router.get('/', auth, async (req, res) => {
       categoryBreakdown,
       upcomingRenewals,
       dueThisWeek,
-      paymentHistory
+      paymentHistory,
+      trendData
     });
 
   } catch (err) {
