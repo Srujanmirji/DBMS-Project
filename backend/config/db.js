@@ -13,22 +13,13 @@ const pool = mysql.createPool({
 });
 
 async function initiateDB() {
+  console.log('--- DB INIT START ---');
   try {
-    // Skip database creation if on Vercel/Production (Managed DBs like Railway usually don't allow this)
+    // Skip database creation if on Vercel/Production
     if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
-      const connection = await mysql.createConnection({
-        host: process.env.MYSQLHOST || process.env.DB_HOST || '127.0.0.1',
-        port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
-        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || ''
-      });
-      
-      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker'}\`;`);
-      await connection.end();
-      console.log('Database verification step completed.');
-    }
-
-    console.log('Database ' + (process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker') + ' is ready.');
+      console.log('Checking/Creating database...');
+...
+    console.log('Database ' + (process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker') + ' is verified.');
 
     // Create tables
     await pool.query(`

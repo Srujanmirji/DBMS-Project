@@ -1,0 +1,13 @@
+{
+  "name": "subscription-tracker-monorepo",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend",
+    "start": "npm start --workspace=backend"
+  }
+}
