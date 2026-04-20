@@ -18,8 +18,8 @@ export function AuthProvider({ children }) {
           const res = await getUserProfile();
           setUser(res.data);
           
-          // if we are landing on a root or auth page, redirect based on profile completion
-          if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/register') {
+          // if we are landing on an auth page, redirect based on profile completion
+          if (location.pathname === '/login' || location.pathname === '/register') {
             const profileRes = await getProfileSetup();
             if (profileRes.data.profile_completed) {
               navigate('/app/dashboard');

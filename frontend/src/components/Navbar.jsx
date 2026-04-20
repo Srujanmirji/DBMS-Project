@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { CreditCard, Menu, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const links = [
   { label: 'Features',  href: '#features' },
@@ -10,6 +11,7 @@ const links = [
 ];
 
 export default function Navbar() {
+  const { user } = useAuth();
   const [open, setOpen]       = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -51,8 +53,14 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-2.5">
-          <Link to="/login" className="px-4 py-1.5 text-caption font-medium text-text-muted hover:text-text-primary transition-colors duration-150">Log in</Link>
-          <Link to="/register" className="btn-primary !py-2 !px-5 !text-micro inline-block">Get Started</Link>
+          {user ? (
+            <Link to="/app/dashboard" className="btn-primary !py-2 !px-5 !text-micro inline-block">Go to Dashboard</Link>
+          ) : (
+            <>
+              <Link to="/login" className="px-4 py-1.5 text-caption font-medium text-text-muted hover:text-text-primary transition-colors duration-150">Log in</Link>
+              <Link to="/register" className="btn-primary !py-2 !px-5 !text-micro inline-block">Get Started</Link>
+            </>
+          )}
         </div>
 
         <button onClick={() => setOpen(!open)} className="md:hidden p-1.5 text-text-muted hover:text-text-primary transition-colors">
@@ -77,8 +85,14 @@ export default function Navbar() {
                 </a>
               ))}
               <div className="pt-3 mt-2 border-t border-line space-y-2">
-                <Link to="/login" className="block py-2 text-caption font-medium text-text-secondary">Log in</Link>
-                <Link to="/register" className="btn-primary w-full !text-caption block text-center">Get Started</Link>
+                {user ? (
+                  <Link to="/app/dashboard" className="btn-primary w-full !text-caption block text-center">Go to Dashboard</Link>
+                ) : (
+                  <>
+                    <Link to="/login" className="block py-2 text-caption font-medium text-text-secondary">Log in</Link>
+                    <Link to="/register" className="btn-primary w-full !text-caption block text-center">Get Started</Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

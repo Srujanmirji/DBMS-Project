@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { getSubscriptions, addSubscription, updateSubscription, updateSubscriptionStatus, deleteSubscription, shareSubscription, logSubscriptionUsage } from '../services/api';
-import { Plus, Edit2, Play, Pause, Trash2, X, Share2, Users } from 'lucide-react';
+import { Plus, Edit2, Play, Pause, Trash2, X, Share2, Users, Film, Music, Youtube, Package, BookOpen, MessageSquare, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
+
+const PLATFORMS = [
+  { id: 'Netflix', name: 'Netflix', icon: Film, color: 'group-hover:text-red-500', active: 'border-red-500 bg-red-500/10 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' },
+  { id: 'Spotify', name: 'Spotify', icon: Music, color: 'group-hover:text-green-500', active: 'border-green-500 bg-green-500/10 text-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' },
+  { id: 'YouTube', name: 'YouTube', icon: Youtube, color: 'group-hover:text-red-500', active: 'border-red-500 bg-red-500/10 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' },
+  { id: 'Amazon Prime', name: 'Prime', icon: Package, color: 'group-hover:text-blue-500', active: 'border-blue-500 bg-blue-500/10 text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]' },
+  { id: 'Notion', name: 'Notion', icon: BookOpen, color: 'group-hover:text-gray-300', active: 'border-gray-300 bg-gray-300/10 text-gray-300 shadow-[0_0_15px_rgba(209,213,219,0.2)]' },
+  { id: 'ChatGPT', name: 'ChatGPT', icon: MessageSquare, color: 'group-hover:text-emerald-500', active: 'border-emerald-500 bg-emerald-500/10 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)]' }
+];
 
 export default function Subscriptions() {
   const { user } = useAuth();
@@ -21,6 +30,8 @@ export default function Subscriptions() {
     next_due_date: new Date().toISOString().split('T')[0],
     is_trial: false, trial_end_date: ''
   });
+  const [selectedPlatform, setSelectedPlatform] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
 
   const fetchSubs = () => {
     setLoading(true);
@@ -37,6 +48,16 @@ export default function Subscriptions() {
   const handleOpenModal = (sub = null) => {
     if (sub) {
       setEditingSub(sub);
+      
+      const isKnown = PLATFORMS.some(p => p.id === sub.service_name);
+      if (isKnown) {
+        setSelectedPlatform(sub.service_name);
+        setShowManualInput(false);
+      } else {
+        setSelectedPlatform('Other');
+        setShowManualInput(true);
+      }
+
       setFormData({
         service_name: sub.service_name,
         category: sub.category || 'Entertainment',
@@ -49,6 +70,8 @@ export default function Subscriptions() {
       });
     } else {
       setEditingSub(null);
+      setSelectedPlatform('');
+      setShowManualInput(false);
       setFormData({
         service_name: '', category: 'Entertainment', recurring_amount: '',
         billing_cycle: 'monthly', start_date: new Date().toISOString().split('T')[0],
@@ -117,7 +140,8 @@ export default function Subscriptions() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in relative h-full">
+    <>
+      <div className="space-y-6 animate-fade-in relative h-full">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-display-sm text-text-primary mb-2">Subscriptions</h1>
@@ -189,117 +213,197 @@ export default function Subscriptions() {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-text-muted">No subscriptions found. Click "Add New" to get started.</td>
+                  <td colSpan="7" className="p-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center text-text-muted"><Plus className="w-5 h-5" /></div>
+                      <p className="text-text-muted">No subscriptions tracked yet.</p>
+                      <button onClick={() => handleOpenModal()} className="mt-2 text-accent hover:text-accent-hover text-sm font-semibold tracking-wide uppercase transition-colors">Start Tracking</button>
+                    </div>
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       )}
+      </div>
 
-      {/* Modal */}
+      {/* Subscription Form Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface-1 border border-line rounded-2xl w-full max-w-md shadow-card-hover overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-line">
-              <h2 className="text-body-lg font-semibold text-text-primary">{editingSub ? 'Edit Subscription' : 'Add Subscription'}</h2>
-              <button onClick={() => setModalOpen(false)} className="text-text-muted hover:text-text-primary"><X className="w-5 h-5"/></button>
+        <div className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-black/60 backdrop-blur-md animate-fade-in custom-scrollbar">
+          <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
+            <div className="relative w-full max-w-lg bg-surface-1/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ring-white/5 animate-fade-in transition-all">
+            {/* Soft Glow Background */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-48 bg-accent/20 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between p-6 pb-4 relative z-10">
+              <h2 className="text-2xl font-bold tracking-tight text-white">{editingSub ? 'Edit Subscription' : 'New Subscription'}</h2>
+              <button type="button" onClick={() => setModalOpen(false)} className="p-2 rounded-full text-text-muted hover:bg-white/10 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6 relative z-10">
+              {/* Visual Platform Selector */}
               <div>
-                <label className="block text-caption text-text-secondary mb-1">Platform Name</label>
-                <input required type="text" value={formData.service_name} onChange={e => setFormData({...formData, service_name: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-accent" placeholder="e.g. Netflix" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-caption text-text-secondary mb-1">Cost</label>
-                  <input required type="number" step="0.01" value={formData.recurring_amount} onChange={e => setFormData({...formData, recurring_amount: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-accent" placeholder="15.99" />
-                </div>
-                <div>
-                  <label className="block text-caption text-text-secondary mb-1">Category</label>
-                  <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-accent">
-                    <option>Entertainment</option>
-                    <option>Productivity</option>
-                    <option>Fitness</option>
-                    <option>Utility</option>
-                    <option>Other</option>
-                  </select>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-3">Platform</label>
+                <div className="grid grid-cols-4 gap-3">
+                  {PLATFORMS.map((p) => {
+                    const isSelected = selectedPlatform === p.id;
+                    return (
+                      <button 
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlatform(p.id);
+                          setShowManualInput(false);
+                          setFormData({...formData, service_name: p.id});
+                        }}
+                        className={`group relative flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 overflow-hidden ${isSelected ? p.active : 'border-white/5 bg-black/40 text-text-muted hover:text-white hover:bg-white/5 hover:border-white/10 hover:-translate-y-0.5'}`}
+                      >
+                        <p.icon className={`w-6 h-6 mb-2 transition-colors duration-300 ${isSelected ? '' : p.color}`} />
+                        <span className="text-[10px] font-semibold tracking-wide whitespace-nowrap overflow-hidden text-ellipsis w-full text-center">{p.name}</span>
+                      </button>
+                    )
+                  })}
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlatform('Other');
+                      setShowManualInput(true);
+                      if (!PLATFORMS.some(p => p.id === formData.service_name)) {
+                        // Keep current if it's already a custom name. Otherwise empty.
+                      } else {
+                        setFormData({...formData, service_name: ''});
+                      }
+                    }}
+                    className={`group relative flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 ${selectedPlatform === 'Other' ? 'border-accent bg-accent/10 text-accent shadow-[0_0_15px_rgba(249,115,22,0.2)]' : 'border-white/5 bg-black/40 text-text-muted hover:text-white hover:bg-white/5 hover:border-white/10 hover:-translate-y-0.5'}`}
+                  >
+                    <MoreHorizontal className={`w-6 h-6 mb-2 transition-colors duration-300 ${selectedPlatform === 'Other' ? '' : 'group-hover:text-accent'}`} />
+                    <span className="text-[10px] font-semibold tracking-wide">Other</span>
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-caption text-text-secondary mb-1">Billing Cycle</label>
-                  <select value={formData.billing_cycle} onChange={e => setFormData({...formData, billing_cycle: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-accent">
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                    <option value="weekly">Weekly</option>
-                  </select>
+              {/* Manual Input (only if Other) */}
+              <div className={`transition-all duration-300 ${showManualInput ? 'opacity-100 max-h-24' : 'opacity-0 max-h-0 overflow-hidden m-0 p-0'}`}>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Custom Platform Name</label>
+                <input required={showManualInput} type="text" value={formData.service_name} onChange={e => setFormData({...formData, service_name: e.target.value})} className="w-full bg-black/40 border border-white/5 rounded-2xl px-4 py-3.5 text-white outline-none focus:border-accent transition-colors shadow-inner" placeholder="e.g. My Gym, Webflow" />
+              </div>
+
+              {/* Detailed Inputs */}
+              <div className="bg-black/20 p-5 rounded-[1.5rem] border border-white/5 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Cost */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Cost</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-medium">$</span>
+                      <input required type="number" step="0.01" value={formData.recurring_amount} onChange={e => setFormData({...formData, recurring_amount: e.target.value})} className="w-full bg-black/40 border border-white/5 rounded-xl pl-8 pr-4 py-3 text-white outline-none focus:border-accent transition-colors shadow-inner font-medium" placeholder="0.00" />
+                    </div>
+                  </div>
+                  {/* Category */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Category</label>
+                    <div className="relative">
+                      <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full appearance-none bg-black/40 border border-white/5 rounded-xl pr-10 pl-4 py-3 text-white outline-none focus:border-accent transition-colors shadow-inner font-medium">
+                        <option className="bg-surface-1">Entertainment</option>
+                        <option className="bg-surface-1">Productivity</option>
+                        <option className="bg-surface-1">Fitness</option>
+                        <option className="bg-surface-1">Utility</option>
+                        <option className="bg-surface-1">Cloud Services</option>
+                        <option className="bg-surface-1">Health</option>
+                        <option className="bg-surface-1">Other</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-muted">
+                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-caption text-text-secondary mb-1">Next Due Date</label>
-                  <input required type="date" value={formData.next_due_date} onChange={e => setFormData({...formData, next_due_date: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-accent" />
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Cycle */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Cycle</label>
+                    <div className="relative">
+                      <select value={formData.billing_cycle} onChange={e => setFormData({...formData, billing_cycle: e.target.value})} className="w-full appearance-none bg-black/40 border border-white/5 rounded-xl pr-10 pl-4 py-3 text-white outline-none focus:border-accent transition-colors shadow-inner font-medium">
+                        <option value="monthly" className="bg-surface-1">Monthly</option>
+                        <option value="yearly" className="bg-surface-1">Yearly</option>
+                        <option value="weekly" className="bg-surface-1">Weekly</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-muted">
+                        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Due Date */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-muted mb-2">Next Due Date</label>
+                    <input required type="date" value={formData.next_due_date} onChange={e => setFormData({...formData, next_due_date: e.target.value})} className="w-full appearance-none bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-white outline-none focus:border-accent transition-colors shadow-inner font-medium [color-scheme:dark]" />
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-line">
-                <label className="flex items-center gap-3 p-3 rounded-lg border border-line bg-surface-2 cursor-pointer hover:border-line-hover transition-colors mb-4">
-                  <input type="checkbox" checked={formData.is_trial} onChange={e => setFormData({...formData, is_trial: e.target.checked})} className="accent-accent w-4 h-4" />
-                  <span className="text-sm text-text-primary">Enable Free Trial Tracking</span>
+              {/* Free Trial Toggle */}
+              <div className="pt-2">
+                <label className="flex items-center justify-between p-4 rounded-2xl border border-white/5 bg-black/20 cursor-pointer hover:bg-black/30 transition-colors group">
+                  <span className="text-sm font-medium text-white group-hover:text-amber-100 transition-colors">Track Free Trial Expiry</span>
+                  <div className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={formData.is_trial} onChange={e => setFormData({...formData, is_trial: e.target.checked})} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 hover:shadow-[0_0_15px_rgba(245,158,11,0.2)]"></div>
+                  </div>
                 </label>
                 
-                {formData.is_trial && (
-                  <div className="mb-4 animate-fade-in">
-                    <label className="block text-caption text-text-secondary mb-1">Trial Expiry Date</label>
-                    <input type="date" required={formData.is_trial} value={formData.trial_end_date} onChange={e => setFormData({...formData, trial_end_date: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-accent" />
-                  </div>
-                )}
+                <div className={`transition-all duration-300 ${formData.is_trial ? 'opacity-100 max-h-24 mt-3' : 'opacity-0 max-h-0 overflow-hidden m-0'}`}>
+                  <input type="date" required={formData.is_trial} value={formData.trial_end_date} onChange={e => setFormData({...formData, trial_end_date: e.target.value})} className="w-full appearance-none bg-amber-500/10 border border-amber-500/20 text-amber-200 rounded-2xl px-4 py-3.5 outline-none focus:border-amber-400 transition-colors font-medium [color-scheme:dark]" />
+                </div>
               </div>
 
-              <div className="pt-4 mt-2 border-t border-line flex justify-end gap-3">
-                <button type="button" onClick={() => setModalOpen(false)} className="btn-ghost !text-text-primary">Cancel</button>
-                <button type="submit" className="btn-primary">Save</button>
+              {/* Buttons */}
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setModalOpen(false)} className="flex-1 py-4 rounded-xl text-sm font-bold text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 transition-colors">Discard</button>
+                <button type="submit" className="flex-[2] py-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-accent to-orange-400 hover:from-accent-hover hover:to-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.4)] hover:shadow-[0_0_30px_rgba(249,115,22,0.6)] transition-all active:scale-[0.98]">{editingSub ? 'Update Tracker' : 'Track Subscription'}</button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}
 
       {/* Share / Split Subscription Modal */}
       {shareModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-surface-1 rounded-2xl w-full max-w-md border border-line shadow-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-display-xs text-text-primary flex items-center gap-2">
-                <Users className="w-5 h-5 text-emerald-400" />
-                Split Cost
-              </h2>
-              <button onClick={() => setShareModalOpen(false)} className="p-2 text-text-muted hover:text-text-primary rounded-full hover:bg-surface-2 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-fade-in">
+          <div className="bg-surface-1/90 backdrop-blur-xl border border-white/5 rounded-[2rem] w-full max-w-md shadow-2xl overflow-hidden ring-1 ring-white/5">
+            <div className="flex items-start justify-between p-6 pb-2">
+              <div className="flex flex-col">
+                <div className="p-3 bg-emerald-500/10 w-fit rounded-xl mb-3"><Users className="w-6 h-6 text-emerald-400" /></div>
+                <h2 className="text-body-lg font-bold tracking-tight text-white">Split the Bill</h2>
+                <p className="text-sm text-text-muted mt-1">Bind this subscription locally to another user account.</p>
+              </div>
+              <button type="button" onClick={() => setShareModalOpen(false)} className="p-2 rounded-full text-text-muted hover:bg-white/10 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
             </div>
             
-            <form onSubmit={handleShareSubmit} className="space-y-4">
+            <form onSubmit={handleShareSubmit} className="p-6 pt-2 space-y-5">
               <div>
-                <label className="block text-caption text-text-secondary mb-1">Friend's Email address</label>
-                <input required type="email" placeholder="friend@example.com" value={shareData.shared_with_email} onChange={e => setShareData({...shareData, shared_with_email: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-emerald-400" />
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Target Email</label>
+                <input required type="email" placeholder="friend@example.com" value={shareData.shared_with_email} onChange={e => setShareData({...shareData, shared_with_email: e.target.value})} className="w-full bg-black/40 border border-emerald-500/20 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-400 transition-colors shadow-inner placeholder:text-text-muted/50" />
               </div>
               <div>
-                <label className="block text-caption text-text-secondary mb-1">Split Percentage (%)</label>
-                <input required type="number" min="1" max="100" value={shareData.split_percentage} onChange={e => setShareData({...shareData, split_percentage: e.target.value})} className="w-full bg-surface-2 border border-line rounded-lg px-3 py-2 text-text-primary outline-none focus:border-emerald-400" />
-                <p className="text-micro text-emerald-400/80 mt-1">They will pay {shareData.split_percentage}% of the recurring amount via MySQL mappings.</p>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Their Share (%)</label>
+                <div className="relative">
+                  <input required type="number" min="1" max="100" value={shareData.split_percentage} onChange={e => setShareData({...shareData, split_percentage: e.target.value})} className="w-full bg-black/40 border border-emerald-500/20 rounded-xl px-4 py-3.5 text-white outline-none focus:border-emerald-400 transition-colors shadow-inner" />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted font-medium">%</span>
+                </div>
+                <p className="text-xs font-medium text-emerald-400/80 mt-2 bg-emerald-500/5 py-2 px-3 rounded-lg">They will assume {shareData.split_percentage}% of the recurring cost natively.</p>
               </div>
 
-              <div className="pt-4 mt-2 border-t border-line flex justify-end gap-3">
-                <button type="button" onClick={() => setShareModalOpen(false)} className="btn-ghost !text-text-primary">Cancel</button>
-                <button type="submit" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-emerald-500/25 transition-all text-sm">Send Request</button>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShareModalOpen(false)} className="px-6 py-3 rounded-full text-sm font-semibold text-text-secondary hover:text-white hover:bg-white/5 transition-colors">Cancel</button>
+                <button type="submit" className="px-8 py-3 rounded-full text-sm font-semibold text-emerald-950 bg-emerald-500 hover:bg-emerald-400 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]">Link Account</button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
