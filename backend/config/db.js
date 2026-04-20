@@ -278,12 +278,13 @@ async function initiateDB() {
     `);
     
     console.log('DBMS Phase 3 logics initialized successfully.');
-
   } catch (error) {
-    console.error('Database setup failed:', error);
+    console.error('CRITICAL: Database initialization failed:', error.message);
+    // Do not re-throw, let the server start and try to handle individual requests
   }
 }
 
-initiateDB();
+// Start DB init in background
+initiateDB().catch(err => console.error('Background DB Init Failed:', err));
 
 module.exports = pool;

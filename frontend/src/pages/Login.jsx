@@ -29,7 +29,8 @@ export default function Login() {
         login(res.data.user, res.data.token);
       }
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Connection failed. Please try again.');
+      const errMsg = err.response?.data?.error || err.message || 'Connection failed. Please try again.';
+      setError(typeof errMsg === 'object' ? JSON.stringify(errMsg) : String(errMsg));
     } finally {
       setLoading(false);
     }
