@@ -15,7 +15,9 @@ export default function Dashboard() {
     categoryBreakdown: [],
     upcomingRenewals: [],
     dueThisWeek: [],
-    trendData: []
+    trendData: [],
+    whoOwesMe: [],
+    budgetAlerts: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +34,7 @@ export default function Dashboard() {
     return <div className="animate-pulse flex space-x-4"><div className="flex-1 space-y-6 py-1"><div className="h-6 bg-surface-2 rounded w-1/4"></div><div className="space-y-3"><div className="grid grid-cols-3 gap-4"><div className="h-32 bg-surface-2 rounded col-span-1"></div><div className="h-32 bg-surface-2 rounded col-span-1"></div><div className="h-32 bg-surface-2 rounded col-span-1"></div></div></div></div></div>;
   }
 
-  const { stats, categoryBreakdown, upcomingRenewals, dueThisWeek, trendData } = data;
+  const { stats, categoryBreakdown, upcomingRenewals, dueThisWeek, trendData, whoOwesMe, budgetAlerts } = data;
 
   // Alerts logic: identify renewals due in <= 3 days heavily emphasizing 1 day
   const today = new Date();
@@ -77,7 +79,19 @@ export default function Dashboard() {
         <p className="text-text-secondary">Here's your subscription overview for today.</p>
       </div>
 
-      {/* Alerts */}
+      {/* MySQL Budget Alerts */}
+      {budgetAlerts?.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {budgetAlerts.map((msg, i) => (
+            <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400">
+              <Activity className="w-5 h-5 shrink-0" />
+              <div className="flex-1 text-sm font-medium">{msg}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Expiry Alerts */}
       {alerts.length > 0 && (
         <div className="flex flex-col gap-3">
           {alerts.map(a => {
@@ -191,6 +205,24 @@ export default function Dashboard() {
               </div>
             )) : (
               <div className="p-8 text-center text-text-muted text-sm">No upcoming renewals in 30 days.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Phase 3: Who Owes Me (Native SQL Join) */}
+        <div className="space-y-4 lg:col-span-1">
+          <h3 className="section-label text-emerald-400">Who Owes You (Shared Subs)</h3>
+          <div className="card p-2 flex flex-col h-full bg-emerald-950/10 border-emerald-500/20">
+            {whoOwesMe?.length > 0 ? whoOwesMe.map((debt, i) => (
+              <div key={debt.share_id} className={`flex items-center justify-between p-4 ${i !== whoOwesMe.length - 1 ? 'border-b border-line' : ''}`}>
+                <div className="flex flex-col">
+                  <span className="text-body font-medium text-emerald-300">{debt.debtor_name || debt.debtor_email}</span>
+                  <span className="text-micro text-text-muted mt-0.5">for {debt.service_name} ({debt.split_percentage}%)</span>
+                </div>
+                <div className="font-semibold text-emerald-400">+{formatCurrency(debt.amount_owed, user?.preferred_currency)}</div>
+              </div>
+            )) : (
+              <div className="p-8 text-center text-text-muted text-sm">Nobody owes you money!</div>
             )}
           </div>
         </div>

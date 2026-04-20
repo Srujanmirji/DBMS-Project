@@ -203,7 +203,77 @@ async function initiateDB() {
         ORDER BY total_spent DESC;
       END
     `);
-    console.log('DBMS logics initialized successfully.');
+    // -- Phase 3 Advanced Subsystems --
+    await addColumn('subscriptions', 'uses INT DEFAULT 0');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS budget_alerts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        alert_message VARCHAR(500) NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await pool.query(`
+      CREATE OR REPLACE VIEW vw_shared_debts AS
+      SELECT 
+        ss.id as share_id,
+        owner_user.id as owner_id,
+        shared_user.id as debtor_id,
+        shared_user.name as debtor_name,
+        shared_user.email as debtor_email,
+        s.service_name,
+        s.recurring_amount,
+        ss.split_percentage,
+        (s.recurring_amount * (ss.split_percentage / 100)) as amount_owed
+      FROM shared_subscriptions ss
+      JOIN subscriptions s ON ss.subscription_id = s.id
+      JOIN users owner_user ON s.user_id = owner_user.id
+      JOIN users shared_user ON ss.shared_with_user_id = shared_user.id
+      WHERE s.status = 'active'
+    `);
+
+    await pool.query(`DROP FUNCTION IF EXISTS fn_calculate_true_value`);
+    await pool.query(`
+      CREATE FUNCTION fn_calculate_true_value(recurring_amount DECIMAL(10,2), times_used INT)
+      RETURNS DECIMAL(10,2)
+      DETERMINISTIC
+      BEGIN
+        IF times_used <= 0 THEN RETURN recurring_amount; END IF;
+        RETURN recurring_amount / times_used;
+      END
+    `);
+
+    // Enable Event Scheduler
+    try { await pool.query(`SET GLOBAL event_scheduler = ON`); } catch (e) { console.warn('Could not set GLOBAL event scheduler privileges, attempting session/local.'); }
+
+    await pool.query(`DROP EVENT IF EXISTS ev_budget_checker`);
+    await pool.query(`
+      CREATE EVENT ev_budget_checker
+      ON SCHEDULE EVERY 1 HOUR
+      STARTS CURRENT_TIMESTAMP
+      DO
+      BEGIN
+        INSERT INTO budget_alerts (user_id, alert_message)
+        SELECT 
+          u.id,
+          CONCAT('WARNING: Your active subscriptions (', CAST(v.total_monthly_spend AS DECIMAL(10,2)), ') exceed 80% of your budget (', CAST(u.monthly_budget AS DECIMAL(10,2)), ')!')
+        FROM users u
+        JOIN vw_monthly_summary v ON u.id = v.user_id
+        WHERE u.monthly_budget IS NOT NULL 
+          AND u.monthly_budget > 0 
+          AND v.total_monthly_spend >= (u.monthly_budget * 0.8)
+          AND NOT EXISTS (
+            SELECT 1 FROM budget_alerts ba 
+            WHERE ba.user_id = u.id AND DATE(ba.created_at) = CURDATE()
+          );
+      END
+    `);
+    
+    console.log('DBMS Phase 3 logics initialized successfully.');
 
   } catch (error) {
     console.error('Database setup failed:', error);

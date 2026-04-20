@@ -7,13 +7,29 @@ const auth = require('../middleware/auth');
 router.get('/', auth, async (req, res) => {
   try {
     const [subscriptions] = await db.query(
-      'SELECT * FROM subscriptions WHERE user_id = ? ORDER BY next_due_date ASC',
+      'SELECT *, fn_calculate_true_value(recurring_amount, uses) as true_value FROM subscriptions WHERE user_id = ? ORDER BY next_due_date ASC',
       [req.user.id]
     );
     res.json(subscriptions);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error fetching subscriptions' });
+  }
+});
+
+// POST /subscriptions/:id/use
+router.post('/:id/use', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await db.query(
+      'UPDATE subscriptions SET uses = uses + 1 WHERE id = ? AND user_id = ?',
+      [id, req.user.id]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ error: 'Subscription not found' });
+    res.json({ message: 'Usage logged successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error updating uses' });
   }
 });
 

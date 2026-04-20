@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSubscriptions, addSubscription, updateSubscription, updateSubscriptionStatus, deleteSubscription, shareSubscription } from '../services/api';
+import { getSubscriptions, addSubscription, updateSubscription, updateSubscriptionStatus, deleteSubscription, shareSubscription, logSubscriptionUsage } from '../services/api';
 import { Plus, Edit2, Play, Pause, Trash2, X, Share2, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
@@ -76,6 +76,15 @@ export default function Subscriptions() {
     }
   };
 
+  const handleLogUsage = async (id) => {
+    try {
+      await logSubscriptionUsage(id);
+      fetchSubs(); // Refresh true cost
+    } catch (err) {
+      alert('Error tracking usage');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -128,7 +137,10 @@ export default function Subscriptions() {
               <tr>
                 <th className="p-4">Platform</th>
                 <th className="p-4">Category</th>
-                <th className="p-4">Cost</th>
+                <th className="p-4 flex flex-col">
+                  <span>Cost</span>
+                  <span className="text-[10px] text-accent uppercase tracking-wider">True Value</span>
+                </th>
                 <th className="p-4">Billing</th>
                 <th className="p-4">Next Due</th>
                 <th className="p-4">Status</th>
@@ -140,7 +152,15 @@ export default function Subscriptions() {
                 <tr key={sub.id} className="hover:bg-surface-2/20 transition-colors">
                   <td className="p-4 font-medium">{sub.service_name}</td>
                   <td className="p-4 text-text-secondary">{sub.category || '-'}</td>
-                  <td className="p-4 font-semibold">{formatCurrency(sub.recurring_amount, user?.preferred_currency)}</td>
+                  <td className="p-4">
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{formatCurrency(sub.recurring_amount, user?.preferred_currency)}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-micro text-accent font-medium">{formatCurrency(sub.true_value, user?.preferred_currency)}</span>
+                        <button onClick={() => handleLogUsage(sub.id)} className="bg-accent/10 hover:bg-accent/20 text-accent transition-colors px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold" title="Log usage instance">Log Use</button>
+                      </div>
+                    </div>
+                  </td>
                   <td className="p-4 capitalize">{sub.billing_cycle}</td>
                   <td className="p-4 text-text-secondary">{sub.next_due_date ? new Date(sub.next_due_date).toLocaleDateString() : '-'}</td>
                   <td className="p-4">

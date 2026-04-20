@@ -64,6 +64,12 @@ router.get('/', auth, async (req, res) => {
       ORDER BY YEAR(payment_date) ASC, MONTH(payment_date) ASC
     `, [userId]);
 
+    // 6. Phase 3: Shared Debts Tracking (Who Owes You)
+    const [whoOwesMe] = await db.query(`SELECT * FROM vw_shared_debts WHERE owner_id = ?`, [userId]);
+
+    // 7. Phase 3: Native Budget Alerts
+    const [budgetAlerts] = await db.query(`SELECT alert_message FROM budget_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 3`, [userId]);
+
     const stats = spendStats[0];
     stats.estimated_annual_spend = (stats.estimated_monthly_spend || 0) * 12;
 
@@ -73,7 +79,9 @@ router.get('/', auth, async (req, res) => {
       upcomingRenewals,
       dueThisWeek,
       paymentHistory,
-      trendData
+      trendData,
+      whoOwesMe,
+      budgetAlerts: budgetAlerts.map(a => a.alert_message)
     });
 
   } catch (err) {
