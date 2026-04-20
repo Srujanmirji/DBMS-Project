@@ -8,8 +8,11 @@ const pool = mysql.createPool({
   password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
   database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker',
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: 5,
+  queueLimit: 0,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 async function initiateDB() {
@@ -275,7 +278,9 @@ async function initiateDB() {
   }
 }
 
-// Start DB init in background
-initiateDB().catch(err => console.error('Background DB Init Failed:', err));
+// Start DB init in background (Only in non-production to avoid Vercel timeouts)
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  initiateDB().catch(err => console.error('Background DB Init Failed:', err));
+}
 
 module.exports = pool;
