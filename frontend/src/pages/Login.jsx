@@ -43,7 +43,8 @@ export default function Login() {
         const res = await loginWithGoogle({ access_token: tokenResponse.access_token });
         login(res.data.user, res.data.token);
       } catch (err) {
-        setError(err.response?.data?.error || 'Google Authentication failed.');
+        const errMsg = err.response?.data?.error || err.message || 'Google Authentication failed.';
+        setError(typeof errMsg === 'object' ? JSON.stringify(errMsg) : String(errMsg));
         setLoading(false);
       }
     },

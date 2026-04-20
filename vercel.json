@@ -19,7 +19,7 @@
       "destination": "/api"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/frontend/$1"
     }
   ]

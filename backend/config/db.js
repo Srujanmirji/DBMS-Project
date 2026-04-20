@@ -14,17 +14,19 @@ const pool = mysql.createPool({
 
 async function initiateDB() {
   try {
-    // Connect without a specific database to create it if it doesn't exist
-    const connection = await mysql.createConnection({
-      host: process.env.MYSQLHOST || process.env.DB_HOST || '127.0.0.1',
-      port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
-      user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-      password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || ''
-    });
-    
-    // Create DB if not exists
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker'}\`;`);
-    await connection.end();
+    // Skip database creation if on Vercel/Production (Managed DBs like Railway usually don't allow this)
+    if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+      const connection = await mysql.createConnection({
+        host: process.env.MYSQLHOST || process.env.DB_HOST || '127.0.0.1',
+        port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
+        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || ''
+      });
+      
+      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker'}\`;`);
+      await connection.end();
+      console.log('Database verification step completed.');
+    }
 
     console.log('Database ' + (process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker') + ' is ready.');
 
@@ -247,8 +249,10 @@ async function initiateDB() {
       END
     `);
 
-    // Enable Event Scheduler
-    try { await pool.query(`SET GLOBAL event_scheduler = ON`); } catch (e) { console.warn('Could not set GLOBAL event scheduler privileges, attempting session/local.'); }
+    // Enable Event Scheduler (Skip GLOBAL in production/Vercel)
+    if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+      try { await pool.query(`SET GLOBAL event_scheduler = ON`); } catch (e) { console.warn('Could not set GLOBAL event scheduler privileges.'); }
+    }
 
     await pool.query(`DROP EVENT IF EXISTS ev_budget_checker`);
     await pool.query(`
