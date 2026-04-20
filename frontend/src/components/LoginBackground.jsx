@@ -1,11 +1,13 @@
 import React, { useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
+import { cn } from "../lib/utils"; // Adjusted import path from "@/lib/utils"
 
 function FullscreenShader() {
   const materialRef = useRef(null);
   const { size } = useThree();
 
+  // Create a small static noise texture for iChannel0
   const noiseTexture = useMemo(() => {
     const w = 256;
     const h = 256;
@@ -42,14 +44,14 @@ function FullscreenShader() {
         depthTest={false}
         transparent={false}
         uniforms={uniforms}
-        vertexShader={`
+        vertexShader={/* glsl */ `
           varying vec2 vUv;
           void main() {
             vUv = uv;
             gl_Position = vec4(position, 1.0);
           }
         `}
-        fragmentShader={`
+        fragmentShader={/* glsl */ `
           precision highp float;
 
           uniform float iTime;
@@ -57,6 +59,8 @@ function FullscreenShader() {
           uniform sampler2D iChannel0;
 
           // "Starship" by @XorDev (adapted)
+          vec4 O_color;
+
           void mainImage(out vec4 O, vec2 I)
           {
               vec2 r = iResolution.xy,
@@ -94,8 +98,9 @@ function FullscreenShader() {
 
 export default function LoginBackground() {
   return (
-    <div className="absolute inset-0 w-full h-full pointer-events-none z-0">
+    <div className={cn("absolute inset-0 w-full h-full pointer-events-none z-0")}>
       <Canvas orthographic camera={{ position: [0, 0, 1], zoom: 1 }} dpr={[1, 2]}>
+        {/* Ensure pure black background */}
         <color attach="background" args={["#000000"]} />
         <FullscreenShader />
       </Canvas>
