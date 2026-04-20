@@ -29,7 +29,7 @@ export default function Login() {
         login(res.data.user, res.data.token);
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication failed. Make sure testing DB is running.');
+      setError(err.response?.data?.error || err.message || 'Connection failed. Please try again.');
     } finally {
       setLoading(false);
     }
