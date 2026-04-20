@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
 import { cardReveal, staggerContainer, sectionHeader, viewportOnce } from '../utils/scrollAnimations';
@@ -174,7 +175,7 @@ export default function Pricing() {
                 <Description>Perfect for personal expense tracking.</Description>
               </Header>
               <Body>
-                <button className="btn-ghost w-full mb-2">Get Started</button>
+                <Link to="/login" className="btn-ghost w-full mb-2 text-center block">Get Started</Link>
                 <List>
                   <ListItem>Track up to 5 subscriptions</ListItem>
                   <ListItem>Basic analytics dashboard</ListItem>
@@ -204,7 +205,7 @@ export default function Pricing() {
                 <Description>Advanced tooling to reclaim wasted expenses.</Description>
               </Header>
               <Body>
-                <button className="btn-primary w-full mb-2">Upgrade to Pro</button>
+                <Link to="/login" className="btn-primary w-full mb-2 text-center block">Upgrade to Pro</Link>
                 <List>
                   <ListItem>Unlimited subscription tracking</ListItem>
                   <ListItem>Full predictive analytics & charts</ListItem>
@@ -229,7 +230,7 @@ export default function Pricing() {
                 <Description>For teams managing corporate software stacks.</Description>
               </Header>
               <Body>
-                <button className="btn-ghost w-full mb-2">Contact Sales</button>
+                <Link to="/contact" className="btn-ghost w-full mb-2 text-center block">Contact Sales</Link>
                 <List>
                   <ListItem>Everything in Pro</ListItem>
                   <ListItem>Team member seat assignments</ListItem>

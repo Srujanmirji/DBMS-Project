@@ -33,14 +33,16 @@ export default function Subscriptions() {
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
 
-  const fetchSubs = () => {
-    setLoading(true);
+  const fetchSubs = (background = false) => {
+    if (!background) setLoading(true);
     getSubscriptions().then(res => {
       // Sort natively by highest recurring_amount per intermediate requirements
       const sortedSubs = res.data.sort((a, b) => parseFloat(b.recurring_amount) - parseFloat(a.recurring_amount));
       setSubs(sortedSubs);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+      if (!background) setLoading(false);
+    }).catch(() => {
+      if (!background) setLoading(false);
+    });
   };
 
   useEffect(() => { fetchSubs(); }, []);
@@ -102,7 +104,7 @@ export default function Subscriptions() {
   const handleLogUsage = async (id) => {
     try {
       await logSubscriptionUsage(id);
-      fetchSubs(); // Refresh true cost
+      fetchSubs(true); // Refresh true cost silently
     } catch (err) {
       alert('Error tracking usage');
     }
@@ -117,7 +119,7 @@ export default function Subscriptions() {
         await addSubscription(formData);
       }
       setModalOpen(false);
-      fetchSubs();
+      fetchSubs(true);
     } catch (err) {
       alert('Error saving subscription');
     }
@@ -127,7 +129,7 @@ export default function Subscriptions() {
     const newStatus = currentStatus === 'active' ? 'paused' : 'active';
     try {
       await updateSubscriptionStatus(id, newStatus);
-      fetchSubs();
+      fetchSubs(true);
     } catch (err) { alert('Failed to update status'); }
   };
 
@@ -135,7 +137,7 @@ export default function Subscriptions() {
     if (!window.confirm('Delete this subscription?')) return;
     try {
       await deleteSubscription(id);
-      fetchSubs();
+      fetchSubs(true);
     } catch (err) { alert('Failed to delete'); }
   };
 

@@ -5,21 +5,21 @@ import { Link } from 'react-router-dom';
 
 const nav = {
   product: [
-    { label: 'Features', href: '#features' },
-    { label: 'How it works', href: '#how-it-works' },
-    { label: 'Pricing', href: '#' },
-    { label: 'Changelog', href: '#' },
+    { label: 'Features', href: '/#features' },
+    { label: 'How it works', href: '/#how-it-works' },
+    { label: 'Pricing', href: '/#pricing' },
+    { label: 'Changelog', href: '/#changelog' },
   ],
   company: [
-    { label: 'About Us', href: '#' },
-    { label: 'Careers', href: '#' },
-    { label: 'Blog', href: '#' },
-    { label: 'Contact', href: '#' },
+    { label: 'About Us', href: '/about' },
+    { label: 'Careers', href: '/careers' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'Contact', href: '/contact' },
   ],
   legal: [
-    { label: 'Privacy Policy', href: '#' },
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Cookie Policy', href: '#' },
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Cookie Policy', href: '/cookies' },
   ]
 };
 
@@ -39,17 +39,6 @@ export default function Footer() {
           <p className="text-text-secondary mb-8 max-w-[320px] leading-relaxed">
             Take control of your recurring expenses. Stop paying for subscriptions you don't use and understand your financial footprint.
           </p>
-          <div className="flex items-center gap-4">
-            <a href="#" className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center text-text-muted hover:text-orange-500 hover:bg-orange-500/10 transition-colors border border-line hover:border-orange-500/30">
-              <Twitter className="w-4 h-4" />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center text-text-muted hover:text-orange-500 hover:bg-orange-500/10 transition-colors border border-line hover:border-orange-500/30">
-              <Github className="w-4 h-4" />
-            </a>
-            <a href="#" className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center text-text-muted hover:text-orange-500 hover:bg-orange-500/10 transition-colors border border-line hover:border-orange-500/30">
-              <Linkedin className="w-4 h-4" />
-            </a>
-          </div>
         </div>
 
         {/* Links Columns */}
@@ -57,7 +46,7 @@ export default function Footer() {
           <h3 className="text-text-primary font-semibold mb-5 font-display tracking-wide">Product</h3>
           <ul className="space-y-3.5">
             {nav.product.map((l, i) => (
-              <li key={i}><a href={l.href} className="text-text-secondary hover:text-orange-400 transition-colors">{l.label}</a></li>
+              <li key={i}><Link to={l.href} className="text-text-secondary hover:text-orange-400 transition-colors">{l.label}</Link></li>
             ))}
           </ul>
         </div>
@@ -65,7 +54,7 @@ export default function Footer() {
           <h3 className="text-text-primary font-semibold mb-5 font-display tracking-wide">Company</h3>
           <ul className="space-y-3.5">
             {nav.company.map((l, i) => (
-              <li key={i}><a href={l.href} className="text-text-secondary hover:text-orange-400 transition-colors">{l.label}</a></li>
+              <li key={i}><Link to={l.href} className="text-text-secondary hover:text-orange-400 transition-colors">{l.label}</Link></li>
             ))}
           </ul>
         </div>
@@ -73,7 +62,7 @@ export default function Footer() {
           <h3 className="text-text-primary font-semibold mb-5 font-display tracking-wide">Legal</h3>
           <ul className="space-y-3.5">
             {nav.legal.map((l, i) => (
-              <li key={i}><a href={l.href} className="text-text-secondary hover:text-orange-400 transition-colors">{l.label}</a></li>
+              <li key={i}><Link to={l.href} className="text-text-secondary hover:text-orange-400 transition-colors">{l.label}</Link></li>
             ))}
           </ul>
         </div>

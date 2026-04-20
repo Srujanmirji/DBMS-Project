@@ -48,14 +48,14 @@ export default function Sidebar() {
       <div className="p-4 border-t border-line">
         <div className="flex items-center gap-3 mb-4 px-2">
           <div className="w-8 h-8 rounded-full bg-surface-3 flex items-center justify-center text-text-primary font-semibold text-micro shrink-0 overflow-hidden">
-            {user?.profile_picture ? (
-              <img src={user.profile_picture} alt="Avatar" className="w-full h-full object-cover" />
+            {user?.profile_picture || user?.avatar_url ? (
+              <img src={user.profile_picture || user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               user?.name?.charAt(0).toUpperCase() || 'U'
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-caption font-medium text-text-primary truncate">{user?.name || 'User'}</div>
+            <div className="text-caption font-medium text-text-primary truncate">{user?.name || user?.full_name || 'User'}</div>
             <div className="text-micro text-text-muted truncate">{user?.email}</div>
           </div>
         </div>

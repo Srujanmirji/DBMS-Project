@@ -11,14 +11,12 @@ export const formatCurrency = (amount, currencyCode = 'INR') => {
   const numericAmount = parseFloat(amount);
   if (isNaN(numericAmount)) return String(amount);
 
-  // Dynamic Multiplier Engine based on preferred currency
-  const multiplier = forexRates[currencyCode] || 1;
-  const dynamicallyConvertedAmount = numericAmount * (currencyCode !== 'USD' ? multiplier : 1);
+  const locale = currencyCode === 'INR' ? 'en-IN' : 'en-US';
 
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currencyCode,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(dynamicallyConvertedAmount);
+  }).format(numericAmount);
 };
