@@ -21,7 +21,16 @@ async function initiateDB() {
     // Skip database creation if on Vercel/Production
     if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
       console.log('Checking/Creating database...');
-...
+      const dbName = process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker';
+      const tempConn = await mysql.createConnection({
+        host: process.env.MYSQLHOST || process.env.DB_HOST || '127.0.0.1',
+        port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT) || 3306,
+        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+      });
+      await tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+      await tempConn.end();
+    }
     console.log('Database ' + (process.env.MYSQLDATABASE || process.env.DB_NAME || 'subscription_tracker') + ' is verified.');
 
     // Create tables
