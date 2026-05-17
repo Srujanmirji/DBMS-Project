@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getSubscriptions, addSubscription, updateSubscription, updateSubscriptionStatus, deleteSubscription, shareSubscription, logSubscriptionUsage } from '../services/api';
-import { Plus, Edit2, Play, Pause, Trash2, X, Share2, Users, Film, Music, Youtube, Package, BookOpen, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { Plus, Edit2, Play, Pause, Trash2, X, Share2, Users, Film, Music, Youtube, Package, BookOpen, MessageSquare, MoreHorizontal, Search, SlidersHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
 
@@ -32,6 +32,12 @@ export default function Subscriptions() {
   });
   const [selectedPlatform, setSelectedPlatform] = useState('');
   const [showManualInput, setShowManualInput] = useState(false);
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterCycle, setFilterCycle] = useState('all');
 
   const fetchSubs = (background = false) => {
     if (!background) setLoading(true);
@@ -154,6 +160,88 @@ export default function Subscriptions() {
         </button>
       </div>
 
+      {/* Search & Filter Bar */}
+      <div className="card p-4 bg-surface-2/60 backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+            <input
+              type="text"
+              placeholder="Search subscriptions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-surface-3/50 border border-line rounded-lg pl-9 pr-4 py-2 text-sm text-text-primary outline-none focus:border-accent transition-colors placeholder:text-text-muted/50"
+            />
+          </div>
+          
+          {/* Status Filter */}
+          <div className="relative">
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="appearance-none bg-surface-3/50 border border-line rounded-lg pl-3 pr-8 py-2 text-sm text-text-primary outline-none focus:border-accent transition-colors cursor-pointer"
+            >
+              <option value="all" className="bg-surface-1">All Status</option>
+              <option value="active" className="bg-surface-1">Active</option>
+              <option value="paused" className="bg-surface-1">Paused</option>
+              <option value="cancelled" className="bg-surface-1">Cancelled</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-muted">
+              <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+            </div>
+          </div>
+
+          {/* Category Filter */}
+          <div className="relative">
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="appearance-none bg-surface-3/50 border border-line rounded-lg pl-3 pr-8 py-2 text-sm text-text-primary outline-none focus:border-accent transition-colors cursor-pointer"
+            >
+              <option value="all" className="bg-surface-1">All Categories</option>
+              <option value="Entertainment" className="bg-surface-1">Entertainment</option>
+              <option value="Productivity" className="bg-surface-1">Productivity</option>
+              <option value="Fitness" className="bg-surface-1">Fitness</option>
+              <option value="Utility" className="bg-surface-1">Utility</option>
+              <option value="Cloud Services" className="bg-surface-1">Cloud Services</option>
+              <option value="Health" className="bg-surface-1">Health</option>
+              <option value="Other" className="bg-surface-1">Other</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-muted">
+              <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+            </div>
+          </div>
+
+          {/* Billing Cycle Filter */}
+          <div className="relative">
+            <select
+              value={filterCycle}
+              onChange={(e) => setFilterCycle(e.target.value)}
+              className="appearance-none bg-surface-3/50 border border-line rounded-lg pl-3 pr-8 py-2 text-sm text-text-primary outline-none focus:border-accent transition-colors cursor-pointer"
+            >
+              <option value="all" className="bg-surface-1">All Cycles</option>
+              <option value="monthly" className="bg-surface-1">Monthly</option>
+              <option value="yearly" className="bg-surface-1">Yearly</option>
+              <option value="weekly" className="bg-surface-1">Weekly</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-muted">
+              <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          {(searchQuery || filterStatus !== 'all' || filterCategory !== 'all' || filterCycle !== 'all') && (
+            <button 
+              onClick={() => { setSearchQuery(''); setFilterStatus('all'); setFilterCategory('all'); setFilterCycle('all'); }}
+              className="text-xs text-accent hover:text-accent-hover font-semibold uppercase tracking-wider px-3 py-2 rounded-lg hover:bg-accent/10 transition-colors whitespace-nowrap"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
       {loading ? (
         <div className="w-full h-32 bg-surface-2 rounded-xl animate-pulse" />
       ) : (
@@ -174,9 +262,24 @@ export default function Subscriptions() {
               </tr>
             </thead>
             <tbody className="divide-y divide-line text-text-primary">
-              {subs.length > 0 ? subs.map(sub => (
+              {subs.length > 0 ? subs
+                .filter(sub => {
+                  if (searchQuery && !sub.service_name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                  if (filterStatus !== 'all' && sub.status !== filterStatus) return false;
+                  if (filterCategory !== 'all' && sub.category !== filterCategory) return false;
+                  if (filterCycle !== 'all' && sub.billing_cycle !== filterCycle) return false;
+                  return true;
+                })
+                .map(sub => (
                 <tr key={sub.id} className="hover:bg-surface-2/20 transition-colors">
-                  <td className="p-4 font-medium">{sub.service_name}</td>
+                  <td className="p-4 font-medium">
+                    <div className="flex items-center gap-2">
+                      {sub.service_name}
+                      {sub.is_shared === 1 && (
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20">Shared</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 text-text-secondary">{sub.category || '-'}</td>
                   <td className="p-4">
                     <div className="flex flex-col">
@@ -199,18 +302,24 @@ export default function Subscriptions() {
                     </span>
                   </td>
                   <td className="p-4 flex items-center justify-end gap-2">
-                    <button onClick={() => handleOpenShare(sub.id)} className="p-1.5 text-text-muted hover:text-emerald-400 transition-colors bg-surface-2 hover:bg-surface-3 rounded-md" title="Share & Split Cost">
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleToggleStatus(sub.id, sub.status)} className="p-1.5 text-text-muted hover:text-text-primary transition-colors bg-surface-2 hover:bg-surface-3 rounded-md" title={sub.status === 'active' ? 'Pause' : 'Resume'}>
-                      {sub.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    </button>
-                    <button onClick={() => handleOpenModal(sub)} className="p-1.5 text-text-muted hover:text-accent transition-colors bg-surface-2 hover:bg-surface-3 rounded-md">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(sub.id)} className="p-1.5 text-text-muted hover:text-rose-400 transition-colors bg-surface-2 hover:bg-surface-3 rounded-md">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {sub.is_shared !== 1 ? (
+                      <>
+                        <button onClick={() => handleOpenShare(sub.id)} className="p-1.5 text-text-muted hover:text-emerald-400 transition-colors bg-surface-2 hover:bg-surface-3 rounded-md" title="Share & Split Cost">
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleToggleStatus(sub.id, sub.status)} className="p-1.5 text-text-muted hover:text-text-primary transition-colors bg-surface-2 hover:bg-surface-3 rounded-md" title={sub.status === 'active' ? 'Pause' : 'Resume'}>
+                          {sub.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => handleOpenModal(sub)} className="p-1.5 text-text-muted hover:text-accent transition-colors bg-surface-2 hover:bg-surface-3 rounded-md">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(sub.id)} className="p-1.5 text-text-muted hover:text-rose-400 transition-colors bg-surface-2 hover:bg-surface-3 rounded-md">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-[10px] text-text-muted italic px-2">Managed by Owner</span>
+                    )}
                   </td>
                 </tr>
               )) : (

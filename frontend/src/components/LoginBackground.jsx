@@ -9,7 +9,7 @@ function FullscreenShader() {
 
   // Create a small static noise texture for iChannel0
   const noiseTexture = useMemo(() => {
-    const w = 256;
+    const w = 256;  
     const h = 256;
     const data = new Uint8Array(w * h * 4);
     for (let i = 0; i < w * h * 4; i++) data[i] = Math.floor(Math.random() * 256);

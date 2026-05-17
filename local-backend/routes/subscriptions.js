@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const auth = require('../middleware/auth');
+const { sendSettlementEmail } = require('../utils/mailer');
 
 // GET /subscriptions
 router.get('/', auth, async (req, res) => {
@@ -136,6 +137,69 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error deleting subscription' });
+  }
+});
+
+// POST /subscriptions/shared/:share_id/settle
+// Demonstrates a MySQL Transaction to record payment and remove debt
+router.post('/shared/:share_id/settle', auth, async (req, res) => {
+  const shareId = req.params.share_id;
+  const connection = await db.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+
+    // 1. Verify debt exists and get details
+    const [shares] = await connection.query(`
+      SELECT ss.subscription_id, ss.shared_with_user_id, s.recurring_amount, ss.split_percentage, s.user_id as owner_id
+      FROM shared_subscriptions ss
+      JOIN subscriptions s ON ss.subscription_id = s.id
+      WHERE ss.id = ?
+    `, [shareId]);
+
+    if (shares.length === 0) {
+      throw new Error('Shared subscription not found');
+    }
+    const share = shares[0];
+
+    // Ensure the current user is involved
+    if (req.user.id !== share.shared_with_user_id && req.user.id !== share.owner_id) {
+      throw new Error('Unauthorized to settle this debt');
+    }
+
+    const amountOwed = (share.recurring_amount * (share.split_percentage / 100)).toFixed(2);
+
+    // 2. Insert payment record (Debtor pays Owner)
+    await connection.query(`
+      INSERT INTO payments (subscription_id, user_id, amount, payment_date, status)
+      VALUES (?, ?, ?, CURDATE(), 'completed (settled split)')
+    `, [share.subscription_id, share.shared_with_user_id, amountOwed]);
+
+    // 3. Remove the shared_subscriptions entry (debt settled)
+    await connection.query(`
+      DELETE FROM shared_subscriptions WHERE id = ?
+    `, [shareId]);
+
+    await connection.commit();
+    
+    // 4. Send Email Alert (Async, don't await so it doesn't block response)
+    const [owner] = await db.query('SELECT email FROM users WHERE id = ?', [share.owner_id]);
+    if (owner.length > 0 && owner[0].email) {
+      sendSettlementEmail(
+        owner[0].email, 
+        req.user.name || 'Your friend', 
+        share.service_name, 
+        amountOwed
+      ).catch(err => console.error("Failed to send settlement email async", err));
+    }
+
+    res.json({ message: 'Debt settled successfully' });
+  } catch (err) {
+    await connection.rollback();
+    console.error('Transaction failed:', err);
+    res.status(500).json({ error: err.message || 'Server error settling debt' });
+  } finally {
+    connection.release();
   }
 });
 

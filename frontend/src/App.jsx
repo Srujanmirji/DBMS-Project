@@ -12,6 +12,10 @@ import { AuthProvider } from './context/AuthContext';
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
 import Subscriptions from './pages/Subscriptions';
+import Payments from './pages/Payments';
+import AuditLog from './pages/AuditLog';
+import Notifications from './pages/Notifications';
+import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import ProfileSetup from './pages/ProfileSetup';
@@ -60,6 +64,10 @@ export default function App() {
           <Route path="/app" element={<AppLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="subscriptions" element={<Subscriptions />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="activity" element={<AuditLog />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="admin" element={<AdminDashboard />} />
             <Route path="profile" element={<Profile />} />
           </Route>
           

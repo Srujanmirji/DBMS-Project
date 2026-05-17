@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { getDashboard } from '../services/api';
+import { getDashboard, exportCSV, settleSharedDebt } from '../services/api';
 import { 
   CreditCard, Calendar, Activity, PauseCircle, TrendingDown, 
-  Sparkles, ArrowRight, UserCircle, CheckCircle, AlertTriangle, Info, Clock, Tag
+  Sparkles, ArrowRight, UserCircle, CheckCircle, AlertTriangle, Info, Clock, Tag, Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
@@ -26,18 +26,34 @@ export default function Dashboard() {
     dueThisWeek: [],
     trendData: [],
     whoOwesMe: [],
+    whoIOwe: [],
     budgetAlerts: []
   });
   const [loading, setLoading] = useState(true);
 
+  const fetchData = () => {
+    getDashboard().then(res => {
+      setData(res.data);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  };
+
   useEffect(() => {
-    getDashboard()
-      .then(res => {
-        setData(res.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false)); // fallback gracefully
-  }, []);
+    fetchData();
+  }, [user]);
+
+  const handleSettle = async (shareId) => {
+    if (!window.confirm('Are you sure you want to settle this debt? This will log a payment and remove the shared record.')) return;
+    try {
+      await settleSharedDebt(shareId);
+      fetchData(); // refresh dashboard
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to settle debt');
+    }
+  };
 
   if (loading) {
     return (
@@ -55,7 +71,7 @@ export default function Dashboard() {
     );
   }
 
-  const { stats, categoryBreakdown, upcomingRenewals, dueThisWeek, trendData, whoOwesMe, budgetAlerts } = data;
+  const { stats, categoryBreakdown, upcomingRenewals, dueThisWeek, trendData, whoOwesMe, whoIOwe, budgetAlerts } = data;
 
   const today = new Date();
   const getDaysLeft = (dateString) => {
@@ -144,9 +160,29 @@ export default function Dashboard() {
       
       {/* Header & Insight Card */}
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-display-sm text-text-primary mb-2">Welcome back, {user?.name?.split(' ')[0] || 'User'}</h1>
-          <p className="text-text-secondary text-body">Here's your subscription overview for today.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-display-sm text-text-primary mb-2">Welcome back, {user?.name?.split(' ')[0] || 'User'}</h1>
+            <p className="text-text-secondary text-body">Here's your subscription overview for today.</p>
+          </div>
+          <button 
+            onClick={async () => {
+              try {
+                const res = await exportCSV();
+                const url = window.URL.createObjectURL(new Blob([res.data]));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `SubTracker_Report_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+              } catch (err) { alert('Export failed'); }
+            }}
+            className="btn-ghost flex items-center gap-2 text-sm shrink-0"
+          >
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
         </div>
 
         {/* MOST IMPORTANT: Insight Card */}
@@ -380,6 +416,48 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Phase 3: Who I Owe (Shared Subs) */}
+        <div className="space-y-4">
+          <h3 className="section-label">Who You Owe (Shared Subs)</h3>
+          <div className="card flex flex-col h-full bg-surface-2/60 backdrop-blur-md overflow-hidden">
+            {whoIOwe?.length > 0 ? (
+              <div className="divide-y divide-line/50">
+                {whoIOwe.map((debt) => (
+                  <div key={debt.share_id} className="flex items-center p-4 hover:bg-rose-950/20 transition-colors group">
+                    <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mr-4">
+                      <UserCircle className="w-6 h-6" />
+                    </div>
+                    <div className="flex flex-col flex-1">
+                      <span className="text-body font-semibold text-text-primary">{debt.owner_name || debt.owner_email}</span>
+                      <span className="text-xs text-text-muted mt-0.5">for {debt.service_name} ({debt.split_percentage}%)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="font-bold text-rose-400 text-lg bg-rose-500/10 px-3 py-1 rounded-lg">
+                        -{formatCurrency(debt.amount_owed, user?.preferred_currency)}
+                      </div>
+                      <button 
+                        onClick={() => handleSettle(debt.share_id)}
+                        className="opacity-0 group-hover:opacity-100 btn-primary py-1 px-3 text-xs bg-emerald-500 hover:bg-emerald-400 text-white transition-all shadow-none"
+                      >
+                        Settle
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-10 flex flex-col items-center justify-center text-center gap-3 h-full">
+                 <div className="w-12 h-12 rounded-full bg-surface-3 flex items-center justify-center">
+                  <UserCircle className="w-6 h-6 text-text-muted/50" />
+                </div>
+                <p className="text-sm text-text-muted">You don't owe anyone money!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8">
         {/* Categories Detail */}
         <div className="space-y-4">
           <h3 className="section-label">Category Breakdown</h3>

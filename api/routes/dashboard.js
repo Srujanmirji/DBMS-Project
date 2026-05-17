@@ -67,6 +67,9 @@ router.get('/', auth, async (req, res) => {
     // 6. Phase 3: Shared Debts Tracking (Who Owes You)
     const [whoOwesMe] = await db.query(`SELECT * FROM vw_shared_debts WHERE owner_id = ?`, [userId]);
 
+    // 6b. Shared Debts Tracking (Who I Owe)
+    const [whoIOwe] = await db.query(`SELECT * FROM vw_shared_debts WHERE debtor_id = ?`, [userId]);
+
     // 7. Phase 3: Native Budget Alerts
     const [budgetAlerts] = await db.query(`SELECT alert_message FROM budget_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 3`, [userId]);
 
@@ -81,6 +84,7 @@ router.get('/', auth, async (req, res) => {
       paymentHistory,
       trendData,
       whoOwesMe,
+      whoIOwe,
       budgetAlerts: budgetAlerts.map(a => a.alert_message)
     });
 

@@ -31,12 +31,16 @@ router.post('/google', async (req, res) => {
       const [newRows] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
       user = newRows[0];
     } else {
-      // If user exists but has no google_id, update them
+      // If user exists but has no google_id, link their account
       if (!user.google_id) {
         await db.query('UPDATE users SET google_id = ?, avatar_url = ?, provider = ? WHERE id = ?', [sub, picture, 'google', user.id]);
         user.google_id = sub;
         user.avatar_url = picture;
         user.provider = 'google';
+      } else {
+        // Always refresh avatar_url on every Google login so the picture stays current
+        await db.query('UPDATE users SET avatar_url = ? WHERE id = ?', [picture, user.id]);
+        user.avatar_url = picture;
       }
     }
 

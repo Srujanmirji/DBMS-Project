@@ -31,9 +31,7 @@ export default function Footer() {
         {/* Brand Column */}
         <div className="col-span-2 lg:col-span-2">
           <Link to="/" className="flex items-center gap-2 mb-6 inline-flex hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-              <CreditCard className="w-4 h-4 text-orange-500" />
-            </div>
+            <img src="/logo.png" alt="SubTracker Logo" className="w-8 h-8 object-contain" />
             <span className="text-body font-display font-semibold text-text-primary tracking-tight">SubTracker</span>
           </Link>
           <p className="text-text-secondary mb-8 max-w-[320px] leading-relaxed">

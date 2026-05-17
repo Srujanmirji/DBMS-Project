@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { LayoutDashboard, Receipt, User, LogOut, CreditCard } from 'lucide-react';
+import { LayoutDashboard, Receipt, Wallet, Activity, Bell, Shield, User, LogOut, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
@@ -9,18 +9,24 @@ export default function Sidebar() {
   const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/app/dashboard' },
     { label: 'Subscriptions', icon: Receipt, path: '/app/subscriptions' },
+    { label: 'Payments', icon: Wallet, path: '/app/payments' },
+    { label: 'Activity', icon: Activity, path: '/app/activity' },
+    { label: 'Alerts', icon: Bell, path: '/app/notifications' },
     { label: 'Profile', icon: User, path: '/app/profile' },
   ];
+
+  const adminEmails = ['srujanmirji10@gmail.com', 'srujanmirji20@gmail.com'];
+  if (user?.email && adminEmails.includes(user.email.toLowerCase())) {
+    navItems.splice(navItems.length - 1, 0, { label: 'Admin', icon: Shield, path: '/app/admin' });
+  }
 
   return (
     <aside className="w-64 h-screen bg-surface-1 border-r border-line flex flex-col fixed left-0 top-0">
       {/* Brand */}
       <div className="h-16 flex items-center px-6 border-b border-line mb-6">
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center">
-            <CreditCard className="w-3.5 h-3.5 text-accent" />
-          </div>
-          <span className="text-body font-display font-semibold text-text-primary tracking-tight">SubTracker</span>
+          <img src="/logo.png" alt="SubTracker Logo" className="w-8 h-8 object-contain" />
+          <span className="text-xl font-display font-bold text-text-primary tracking-tight">SubTracker</span>
         </Link>
       </div>
 

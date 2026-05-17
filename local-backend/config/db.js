@@ -214,6 +214,7 @@ async function initiateDB() {
         user_id INT NOT NULL,
         alert_message VARCHAR(500) NOT NULL,
         is_read BOOLEAN DEFAULT FALSE,
+        emailed BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
@@ -224,6 +225,8 @@ async function initiateDB() {
       SELECT 
         ss.id as share_id,
         owner_user.id as owner_id,
+        owner_user.name as owner_name,
+        owner_user.email as owner_email,
         shared_user.id as debtor_id,
         shared_user.name as debtor_name,
         shared_user.email as debtor_email,
@@ -277,7 +280,24 @@ async function initiateDB() {
       END
     `);
     
-    console.log('DBMS Phase 3 logics initialized successfully.');
+    // -- Phase 4: Email OTP Support --
+    await addColumn('users', 'email_verified BOOLEAN DEFAULT FALSE');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS otp_codes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        otp VARCHAR(6) NOT NULL,
+        purpose ENUM('login', 'verify', 'reset') DEFAULT 'login',
+        expires_at TIMESTAMP NOT NULL,
+        used BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_otp_email (email),
+        INDEX idx_otp_expires (expires_at)
+      )
+    `);
+    
+    console.log('DBMS Phase 4 (Email/OTP) initialized successfully.');
   } catch (error) {
     console.error('CRITICAL: Database initialization failed:', error.message);
     // Do not re-throw, let the server start and try to handle individual requests

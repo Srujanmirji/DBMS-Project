@@ -1,0 +1,6 @@
+{
+    "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces": true,
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces": true,
+    "claudeCode.allowDangerouslySkipPermissions": true
+}

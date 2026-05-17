@@ -37,9 +37,7 @@ export default function Navbar() {
     >
       <div className="container-lg h-16 flex items-center justify-between">
         <a href="#" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center">
-            <CreditCard className="w-3.5 h-3.5 text-accent" />
-          </div>
+          <img src="/logo.png" alt="SubTracker Logo" className="w-8 h-8 object-contain" />
           <span className="text-body font-display font-semibold text-text-primary tracking-tight">SubTracker</span>
         </a>
 
