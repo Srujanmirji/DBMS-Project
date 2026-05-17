@@ -9,25 +9,25 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 // Ensure the database is initialized
-require('./config/db');
+require('../server/config/db');
 
 // Setup valid routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/otp', require('./routes/otp'));
-app.use('/api/user', require('./routes/user'));
-app.use('/api/profile', require('./routes/profile'));
-app.use('/api/subscriptions', require('./routes/subscriptions'));
-app.use('/api/payments', require('./routes/payments'));
-app.use('/api/audit', require('./routes/audit'));
-app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/export', require('./routes/export'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/auth', require('../server/routes/auth'));
+app.use('/api/otp', require('../server/routes/otp'));
+app.use('/api/user', require('../server/routes/user'));
+app.use('/api/profile', require('../server/routes/profile'));
+app.use('/api/subscriptions', require('../server/routes/subscriptions'));
+app.use('/api/payments', require('../server/routes/payments'));
+app.use('/api/audit', require('../server/routes/audit'));
+app.use('/api/notifications', require('../server/routes/notifications'));
+app.use('/api/export', require('../server/routes/export'));
+app.use('/api/admin', require('../server/routes/admin'));
+app.use('/api/dashboard', require('../server/routes/dashboard'));
 
 // Health check with DB verify
 app.get('/api/health', async (req, res) => {
   try {
-    const db = require('./config/db');
+    const db = require('../server/config/db');
     await db.query('SELECT 1');
     res.json({ status: 'ok', database: 'connected' });
   } catch (err) {
@@ -59,10 +59,10 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
 }
 // Background Job: Email Budget Alerts (Skip on Vercel serverless environment to prevent timeout and database leakage)
 if (!process.env.VERCEL) {
-  const { sendBudgetAlertEmail } = require('./utils/mailer');
+  const { sendBudgetAlertEmail } = require('../server/utils/mailer');
   setInterval(async () => {
     try {
-      const db = require('./config/db');
+      const db = require('../server/config/db');
       // Find un-emailed budget alerts
       const [alerts] = await db.query(`
         SELECT ba.id, u.email, u.name, u.monthly_budget, v.total_monthly_spend
