@@ -15,6 +15,20 @@ const pool = mysql.createPool({
 async function initiateDB() {
   console.log('--- DB INIT START ---');
   try {
+    // Check if database is already fully initialized to optimize serverless cold starts
+    try {
+      await pool.query('SELECT 1 FROM users LIMIT 1');
+      console.log('Database is already initialized. Skipping DDL schema setup.');
+      return;
+    } catch (e) {
+      if (e.code === 'ER_NO_SUCH_TABLE') {
+        console.log('Database tables not found. Proceeding with database initialization...');
+      } else {
+        console.error('Database connection failed during initialization check:', e.message);
+        throw e;
+      }
+    }
+
     // Skip database creation if on Vercel/Production
     if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
       console.log('Checking/Creating database...');

@@ -57,30 +57,32 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     console.log(`Server is running on port ${PORT}`);
   });
 }
-// Background Job: Email Budget Alerts
-const { sendBudgetAlertEmail } = require('./utils/mailer');
-setInterval(async () => {
-  try {
-    const db = require('./config/db');
-    // Find un-emailed budget alerts
-    const [alerts] = await db.query(`
-      SELECT ba.id, u.email, u.name, u.monthly_budget, v.total_monthly_spend
-      FROM budget_alerts ba
-      JOIN users u ON ba.user_id = u.id
-      JOIN vw_monthly_summary v ON u.id = v.user_id
-      WHERE ba.emailed = FALSE AND u.email IS NOT NULL
-    `);
+// Background Job: Email Budget Alerts (Skip on Vercel serverless environment to prevent timeout and database leakage)
+if (!process.env.VERCEL) {
+  const { sendBudgetAlertEmail } = require('./utils/mailer');
+  setInterval(async () => {
+    try {
+      const db = require('./config/db');
+      // Find un-emailed budget alerts
+      const [alerts] = await db.query(`
+        SELECT ba.id, u.email, u.name, u.monthly_budget, v.total_monthly_spend
+        FROM budget_alerts ba
+        JOIN users u ON ba.user_id = u.id
+        JOIN vw_monthly_summary v ON u.id = v.user_id
+        WHERE ba.emailed = FALSE AND u.email IS NOT NULL
+      `);
 
-    for (const alert of alerts) {
-      if (alert.email) {
-        await sendBudgetAlertEmail(alert.email, alert.name, alert.total_monthly_spend, alert.monthly_budget);
+      for (const alert of alerts) {
+        if (alert.email) {
+          await sendBudgetAlertEmail(alert.email, alert.name, alert.total_monthly_spend, alert.monthly_budget);
+        }
+        // Mark as emailed even if it failed, to prevent infinite loops of sending
+        await db.query('UPDATE budget_alerts SET emailed = TRUE WHERE id = ?', [alert.id]);
       }
-      // Mark as emailed even if it failed, to prevent infinite loops of sending
-      await db.query('UPDATE budget_alerts SET emailed = TRUE WHERE id = ?', [alert.id]);
+    } catch (err) {
+      console.error('[Cron] Failed to process budget alerts:', err.message);
     }
-  } catch (err) {
-    console.error('[Cron] Failed to process budget alerts:', err.message);
-  }
-}, 60000); // Check every 60 seconds
+  }, 60000); // Check every 60 seconds
+}
 
 module.exports = app;
