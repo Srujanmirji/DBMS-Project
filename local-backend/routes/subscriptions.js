@@ -39,8 +39,8 @@ router.post('/', auth, async (req, res) => {
   const { service_name, category, recurring_amount, billing_cycle, start_date, next_due_date, status, is_trial, trial_end_date } = req.body;
   try {
     const [result] = await db.query(
-      'INSERT INTO subscriptions (user_id, service_name, category, recurring_amount, billing_cycle, start_date, next_due_date, status, is_trial, trial_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [req.user.id, service_name, category, recurring_amount, billing_cycle, start_date, next_due_date, status || 'active', is_trial || false, trial_end_date || null]
+      'INSERT INTO subscriptions (user_id, service_name, category, recurring_amount, billing_cycle, next_due_date, status, is_trial, trial_end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [req.user.id, service_name, category, recurring_amount, billing_cycle, next_due_date, status || 'active', is_trial || false, trial_end_date || null]
     );
     res.status(201).json({ message: 'Subscription added successfully', id: result.insertId });
   } catch (err) {
@@ -55,8 +55,8 @@ router.put('/:id', auth, async (req, res) => {
   const { service_name, category, recurring_amount, billing_cycle, start_date, next_due_date, status, is_trial, trial_end_date } = req.body;
   try {
     const [result] = await db.query(
-      'UPDATE subscriptions SET service_name=?, category=?, recurring_amount=?, billing_cycle=?, start_date=?, next_due_date=?, status=?, is_trial=?, trial_end_date=? WHERE id=? AND user_id=?',
-      [service_name, category, recurring_amount, billing_cycle, start_date, next_due_date, status, is_trial || false, trial_end_date || null, id, req.user.id]
+      'UPDATE subscriptions SET service_name=?, category=?, recurring_amount=?, billing_cycle=?, next_due_date=?, status=?, is_trial=?, trial_end_date=? WHERE id=? AND user_id=?',
+      [service_name, category, recurring_amount, billing_cycle, next_due_date, status, is_trial || false, trial_end_date || null, id, req.user.id]
     );
     if (result.affectedRows === 0) return res.status(404).json({ error: 'Subscription not found or unauthorized' });
     res.json({ message: 'Subscription updated successfully' });

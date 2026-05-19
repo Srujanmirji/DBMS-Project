@@ -18,8 +18,8 @@ async function initiateDB() {
     // Check if database is already fully initialized to optimize serverless cold starts
     try {
       await pool.query('SELECT 1 FROM users LIMIT 1');
-      console.log('Database is already initialized. Skipping DDL schema setup.');
-      return;
+      console.log('Database is already initialized. However, running schema updates to ensure all migrations are applied.');
+      // return; // Commented out to ensure schema migrations are applied on start
     } catch (e) {
       if (e.code === 'ER_NO_SUCH_TABLE') {
         console.log('Database tables not found. Proceeding with database initialization...');
@@ -118,10 +118,10 @@ async function initiateDB() {
     await addColumn('users', 'google_id VARCHAR(255) UNIQUE');
     await addColumn('users', 'avatar_url VARCHAR(500)');
     await addColumn('users', "provider VARCHAR(50) DEFAULT 'local'");
-    
+
     await modifyColumn('users', 'profile_picture MEDIUMTEXT');
     await modifyColumn('users', 'password_hash VARCHAR(255) NULL');
-    
+
     await addColumn('subscriptions', 'category VARCHAR(100)');
     // -- Phase 2 Structure Additions -- 
     await addColumn('subscriptions', 'is_trial BOOLEAN DEFAULT FALSE');
@@ -234,6 +234,10 @@ async function initiateDB() {
       )
     `);
 
+    // Ensure the emailed column is added if the table was created before the schema was updated
+    await addColumn('budget_alerts', 'emailed BOOLEAN DEFAULT FALSE');
+
+
     await pool.query(`
       CREATE OR REPLACE VIEW vw_shared_debts AS
       SELECT 
@@ -293,7 +297,7 @@ async function initiateDB() {
           );
       END
     `);
-    
+
     // -- Phase 4: Email OTP Support --
     await addColumn('users', 'email_verified BOOLEAN DEFAULT FALSE');
 
@@ -310,7 +314,7 @@ async function initiateDB() {
         INDEX idx_otp_expires (expires_at)
       )
     `);
-    
+
     console.log('DBMS Phase 4 (Email/OTP) initialized successfully.');
   } catch (error) {
     console.error('CRITICAL: Database initialization failed:', error.message);

@@ -43,8 +43,8 @@ app.get('/', (req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err);
-  res.status(500).json({ 
-    error: 'Internal Server Error', 
+  res.status(500).json({
+    error: 'Internal Server Error',
     message: err.message,
     details: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
